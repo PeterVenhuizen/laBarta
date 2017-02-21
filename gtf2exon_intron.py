@@ -10,7 +10,7 @@ import argparse
 import re
 import os
 
-def gtf2exon_intron(gtf_file, output_dir, select_feature="exon", t_id_attr="transcript_id", attr_sep=" ", base="", for_FA=False):
+def gtf2exon_intron(gtf_file, output_dir, select_feature="exon", t_id_attr="transcript_id", attr_sep=' "', base="", for_FA=False):
 
 	# Add dot after base name
 	if len(base) and not base.endswith('.'): base += '.'

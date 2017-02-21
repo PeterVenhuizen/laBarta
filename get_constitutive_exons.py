@@ -10,7 +10,7 @@ import argparse
 from fileParser import parse_GTF
 from natsort import natsorted
 
-def get_constitutive_exons(gtf_file, select_feature="exon", t_id_attr="transcript_id", attr_sep=" "):
+def get_constitutive_exons(gtf_file, select_feature="exon", t_id_attr="transcript_id", attr_sep=' "'):
 
 
 	from fileParser import parse_GTF
