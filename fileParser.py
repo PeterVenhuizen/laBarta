@@ -77,7 +77,7 @@ def yield_fasta(f):
 			self.seq = seq
 
 	seq = ''
-	for line in open(fasta_file):
+	for line in open(f):
 		if line.startswith('>'):
 			if len(seq):
 				yield(SeqRecord(identifier, seq))
