@@ -57,7 +57,7 @@ if __name__ == '__main__':
 	parser.add_argument('-o', '--output-dir', help="Output directory", required=True)
 	parser.add_argument('--select-feature', default="exon", help="Feature to select in the GTF file")
 	parser.add_argument('--transcript-attr', default='transcript_id', help="The transcript identifier attribute name")
-	parser.add_argument('--attr-sep', default=" ", help="GFF attribute and attribute value separator")
+	parser.add_argument('--attr-sep', default=' "', help="GFF attribute and attribute value separator")
 	parser.add_argument('--base', help="Additional file description. Files will be BASE.exons.bed and BASE.introns.bed.", default="")
 	parser.add_argument('--for-FASTA', dest='for_fasta', action='store_true')
 	parser.set_defaults(for_fasta=False)
