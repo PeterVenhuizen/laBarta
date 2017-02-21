@@ -130,3 +130,22 @@ class parseFastQ(object):
 		#	"Error: The length of the sequence data and the quality data are not equal. Please check near %d" % (self.lineNumber-2)
 			
 		return tuple(record)
+
+def parse_GTF(f, select_feature="exon", t_id_attr="transcript_id", attr_sep=";"):
+	""" Parse a GTF file. Select transcripts based on the t_id_attr. """
+
+	gtf = {}
+	for line in open(f):
+		if not line.startswith('#'):
+			c, source, feature, start, end, score, strand, frame, attributes = line.rstrip().split('\t')
+			attr = {}
+			for a in attributes.split(';'):
+				if len(a):
+					attr_name, attr_value = a.split(attr_sep)
+					attr[attr_name.strip()] = attr_value.replace('\"', '')
+
+			if feature == select_feature:
+				try: gtf[attr[t_id_attr]]["exons"].append([ int(start), int(end) ])
+				except KeyError: gtf[attr[t_id_attr]] = { "chr": c, "strand": strand, "exons": [[ int(start), int(end) ]], "introns": [] }
+
+	return gtf
