@@ -14,7 +14,7 @@ def get_constitutive_exons(gtf_file, select_feature="exon", t_id_attr="transcrip
 
 
 	from fileParser import parse_GTF
-	gtf = parse_GTF(gtf_file, select_feature, t_id_attr, attr_sep)
+	gtf = parse_GTF(gtf_file, select_feature, t_id_attr, attr_sep, False)
 
 	# Group per gene
 	groups = {}
