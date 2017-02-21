@@ -12,7 +12,6 @@ from natsort import natsorted
 
 def get_constitutive_introns(gtf_file, select_feature="exon", t_id_attr="transcript_id", attr_sep=' "'):
 
-	from fileParser import parse_GTF
 	gtf = parse_GTF(gtf_file, select_feature, t_id_attr, attr_sep, True)
 
 	# Group per gene
