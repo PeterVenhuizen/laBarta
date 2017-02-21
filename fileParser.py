@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Collection of often used fileparser
+Collection of often used file parsers
 """
 
 from natsort import natsorted
@@ -176,3 +176,23 @@ def parse_GTF(f, select_feature="exon", t_id_attr="transcript_id", attr_sep=' "'
 					gtf[t_id]['introns'].append([ m.start()+start, m.start()+start+len(m.group())-1 ])
 
 	return gtf
+
+def yield_junctions(f):
+	""" Yield each line as a dictionary. """
+
+	for line in open(f):
+		cols = line.rstrip().split('\t')
+		yield({
+			'chr': cols[0],
+			'start': cols[1],
+			'end': cols[2],
+			'junction_id': cols[3],
+			'depth': int(cols[4]),
+			'strand': cols[5],
+			'rgb': cols[8],
+			'block_size': cols[9],
+			'blocks': cols[10],
+			'junc_start': int(cols[1]) + int(cols[10].split(',')[0]),
+			'junc_end': int(cols[2]) - int(cols[10].split(',')[1]),
+			'misc': cols[11]
+			})
