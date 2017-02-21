@@ -131,7 +131,7 @@ class parseFastQ(object):
 			
 		return tuple(record)
 
-def parse_GTF(f, select_feature="exon", t_id_attr="transcript_id", attr_sep=" "):
+def parse_GTF(f, select_feature="exon", t_id_attr="transcript_id", attr_sep=" ", get_introns=True):
 	""" Parse a GTF file. Select transcripts based on the t_id_attr. """
 
 	gtf = {}
@@ -147,5 +147,30 @@ def parse_GTF(f, select_feature="exon", t_id_attr="transcript_id", attr_sep=" ")
 			if feature == select_feature:
 				try: gtf[attr[t_id_attr]]["exons"].append([ int(start), int(end) ])
 				except KeyError: gtf[attr[t_id_attr]] = { "chr": c, "strand": strand, "exons": [[ int(start), int(end) ]], "introns": [] }
+
+	# Get the transcript intron coordinates
+	if get_introns:
+
+		import re
+		intron_RE = re.compile('I+')
+
+		for t_id in natsorted(gtf):
+
+			c = gtf[t_id]['chr']
+			isFwd = gtf[t_id]['strand'] == '+'
+			gtf[t_id]['exons'] = [ [s, e] for s, e in natsorted(gtf[t_id]['exons']) ] if isFwd else [ [s, e] for s, e in natsorted(gtf[t_id]['exons'], reverse=True) ]
+
+			# Get transcript start and end
+			start = min([ gtf[t_id]['exons'][i][0] for i in xrange(len(gtf[t_id]['exons'])) ])
+			end = max([ gtf[t_id]['exons'][i][1] for i in xrange(len(gtf[t_id]['exons'])) ])
+
+			IE_list = list('I' * abs(end-start))
+			for s, e in exons: IE_list[ s-start:e-start ] = list('E' * (e-s))
+			if isFwd:
+				for i, m in enumerate(intron_RE.finditer(''.join(IE_list))):
+					gtf[t_id]['introns'].append([ m.start()+start, m.start()+start+len(m.group())-1 ])
+			else:
+				for i, m in enumerate(reversed(list(intron_RE.finditer(''.join(IE_lisst))))):
+					gtf[t_id]['introns'].append([ m.start()+start, m.start()+start+len(m.group())-1 ])
 
 	return gtf
