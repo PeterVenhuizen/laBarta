@@ -4,6 +4,8 @@
 Collection of often used fileparser
 """
 
+from natsort import natsorted
+
 def yield_salmon(f):
 	""" Yield salmon output per line """
 
@@ -131,7 +133,7 @@ class parseFastQ(object):
 			
 		return tuple(record)
 
-def parse_GTF(f, select_feature="exon", t_id_attr="transcript_id", attr_sep=" ", get_introns=True):
+def parse_GTF(f, select_feature="exon", t_id_attr="transcript_id", attr_sep=' "', get_introns=True):
 	""" Parse a GTF file. Select transcripts based on the t_id_attr. """
 
 	gtf = {}
@@ -165,12 +167,12 @@ def parse_GTF(f, select_feature="exon", t_id_attr="transcript_id", attr_sep=" ",
 			end = max([ gtf[t_id]['exons'][i][1] for i in xrange(len(gtf[t_id]['exons'])) ])
 
 			IE_list = list('I' * abs(end-start))
-			for s, e in exons: IE_list[ s-start:e-start ] = list('E' * (e-s))
+			for s, e in gtf[t_id]['exons']: IE_list[ s-start:e-start ] = list('E' * (e-s))
 			if isFwd:
 				for i, m in enumerate(intron_RE.finditer(''.join(IE_list))):
 					gtf[t_id]['introns'].append([ m.start()+start, m.start()+start+len(m.group())-1 ])
 			else:
-				for i, m in enumerate(reversed(list(intron_RE.finditer(''.join(IE_lisst))))):
+				for i, m in enumerate(reversed(list(intron_RE.finditer(''.join(IE_list))))):
 					gtf[t_id]['introns'].append([ m.start()+start, m.start()+start+len(m.group())-1 ])
 
 	return gtf
