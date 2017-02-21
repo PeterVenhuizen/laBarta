@@ -17,44 +17,18 @@ def gtf2exon_intron(gtf_file, output_dir, select_feature="exon", t_id_attr="tran
 	if not os.path.exists(output_dir): os.makedirs(output_dir)
 
 	# Parse GTF
-	gtf = parse_GTF(gtf_file, select_feature, t_id_attr, attr_sep)
-
-	# Find introns
-	intron_RE = re.compile('I+')
+	gtf = parse_GTF(gtf_file, select_feature, t_id_attr, attr_sep, True)
 
 	# Output introns
 	fintron = open( '{}{}introns.bed'.format(output_dir, base), 'w' )
 
 	for t in natsorted(gtf):
 
-		strand = gtf[t]["strand"]
-		c = gtf[t]["chr"]
-		isFwd = strand == '+'
-		exons = [ [s, e] for s, e in natsorted(gtf[t]['exons']) ] if isFwd else [ [s, e] for s, e in natsorted(gtf[t]["exons"], reverse=True) ]
-
-		# Get transcript start and end
-		start = min([ exons[i][0] for i in xrange(len(exons)) ])
-		end = max([ exons[i][1] for i in xrange(len(exons)) ])
-
-		IE_list = list('I' * abs(end-start))
-		for s, e in exons: IE_list[ s-start:e-start ] = list('E' * (e-s))
-		if isFwd:
-			for i, m in enumerate(intron_RE.finditer(''.join(IE_list))):
-
-				s = m.start()+start
-				e = m.start()+start+len(m.group())-1
-				size = abs(s-e)+1
-				if for_FA: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000\t{8}\n'.format(c, s, e, t, i+1, s, "FORWARD" if isFwd else "REVERSE", size, strand) )
-				else: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000\t{8}\n'.format(c, s, e, t, i+1, s, "FORWARD" if isFwd else "REVERSE", size, strand) )
-		else:
-			for i, m in enumerate(reversed(list(intron_RE.finditer(''.join(IE_list))))):
-
-				s = m.start()+start
-				e = m.start()+start+len(m.group())-1
-				size = abs(s-e)+1
-				#if for_FA: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000\t{8}\n'.format(c, s-1, e, t, i+1, s, "FORWARD" if isFwd else "REVERSE", size, strand) )
-				if for_FA: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000\t{8}\n'.format(c, s, e, t, i+1, s, "FORWARD" if isFwd else "REVERSE", size, strand) )				
-				else: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000\t{8}\n'.format(c, s, e, t, i+1, s, "FORWARD" if isFwd else "REVERSE", size, strand) )
+		for i, intron in enumerate(gtf[t]['introns']):
+			s, e = intron
+			size = abs(s-e)+1
+			if for_FA: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000{8}\n'.format(gtf[t]['chr'], s, e, t, i+1, s, "FORWARD" if gtf[t]['strand'] == '+' else "REVERSE", size, gtf[t]['strand']) )
+			else: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000{8}\n'.format(gtf[t]['chr'], s, e, t, i+1, s, "FORWARD" if gtf[t]['strand'] == '+' else "REVERSE", size, gtf[t]['strand']) )
 
 	fintron.close()
 
