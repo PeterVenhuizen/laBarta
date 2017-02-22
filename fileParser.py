@@ -5,6 +5,7 @@ Collection of often used file parsers
 """
 
 from natsort import natsorted
+import sys
 
 def yield_salmon(f):
 	""" Yield salmon output per line """
@@ -196,3 +197,19 @@ def yield_junctions(f):
 			'junc_end': int(cols[2]) - int(cols[10].split(',')[1]),
 			'misc': cols[11]
 			})
+
+def yield_bed(f):
+
+	# https://genome.ucsc.edu/FAQ/FAQformat#format1
+	bed_fields = [ 'chr', 'start', 'end', 'name', 'score', 'strand', 'thickStart', 'thickEnd', 'itemRgb', 'blockCount', 'blockSizes', 'blockStarts' ]
+
+	for line in open(f):
+		cols = line.rstrip().split('\t')
+		d = { bed_fields[i]: cols[i] if i in xrange(len(cols)) else None for i in xrange(len(bed_fields)) }
+		try: 
+			d['start'] = int(d['start'])
+			d['end'] = int(d['end'])
+		except KeyError:
+			print "Missing start or end information. Aborting..."
+			sys.exit()
+		yield(d)
