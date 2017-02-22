@@ -120,3 +120,19 @@ def enumerate_iupac(iupac_seq, filename=''):
 				c += 1
 	else: 
 		for s in seqArray: print s
+
+def get_shared_junctions(junction_files):
+	""" Get the shared junctions and return as a set of
+	tuples containing the chr, junc_start, and junc_end """
+
+	from fileParser import yield_junctions
+	j1 = set([ (j['chr'], j['junc_start'], j['junc_end']) for j in yield_junctions[junction_files[0]] ])
+	j2 = set([ (j['chr'], j['junc_start'], j['junc_end']) for j in yield_junctions[junction_files[1]] ])
+	shared = j1.intersection(j2)
+
+	if len(junction_files) > 2:
+		for i in xrange(2, len(junction_files)):
+			jn = set([ (j['chr'], j['junc_start'], j['junc_end']) for j in yield_junctions[junction_files[i]] ])
+			shared = shared.intersection(jn)
+
+	return shared
