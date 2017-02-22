@@ -136,3 +136,19 @@ def get_shared_junctions(junction_files):
 			shared = shared.intersection(jn)
 
 	return shared
+
+def get_top_kmers(fasta_file, k=8, N=10):
+	""" Return the top N kmers of size k based 
+	on the input fasta_file. """
+
+	from collections import Counter
+	from fileParser import yield_fasta
+
+	kmers = Counter()
+	for record in yield_fasta(fasta_file):
+		seq_len = len(record.seq)
+		for i in xrange(seq_len):
+			kmer = record.seq[i:i+k]
+			if len(kmer) == k: kmers.update([''.join(kmer)])
+
+	for i, kmer in enumerate(kmers.most_common(N)): print '{}: {}\t{}'.format(i+1, kmer[0], kmer[1])
