@@ -23,7 +23,7 @@ def get_bin(s, e, bin_size=100000):
 	if bin1 == bin2: return [bin_code]
 	else: return [ bin_code, str(bin2 * bin_size) + '-' + str((bin2+1) * bin_size) ]
 
-def create_ME_EEEJ(exon_files, intron_files, output_dir, k=50, m=1, genome_FASTA="/home/venhuip8/data/master_transcriptome/a_thaliana/a_thaliana_TAIR10.fa"):
+def create_ME_EEEJ(exon_files, intron_files, output_dir, k=50, m=1, GENOME_FASTA="/home/venhuip8/data/master_transcriptome/a_thaliana/a_thaliana_TAIR10.fa"):
 
 	# Parse exons and store all exons in bins of 5kb for filtering out
 	# microexons overlapping with exons of the same or other genes. 
