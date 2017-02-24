@@ -39,9 +39,11 @@ def update_PWM(pwm, seq):
 			pwm[i][base] += 1
 	return pwm
 
-def print_PWM(pwm, title, output_dir):
+def print_PWM(PWM, dinu, ss, output_dir):
 
+	title = '{}_{}'.format(dinu, ss)
 	bases = ['A', 'C', 'G', 'T']
+	pwm = PWM[dinu][ss]
 	len_pwm = len(pwm)
 	positions = xrange(-3, 10) if len_pwm == 13 else xrange(-14, 3)
 	positions = [ x+1 if x >= 0 else x for x in positions ]
@@ -82,6 +84,8 @@ def print_PWM(pwm, title, output_dir):
 
 	# Output PWM text file
 	with open('{}/{}.txt'.format(output_dir, title), 'w') as fout:
+		fout.write( '#PWM: {}\n'.format(title) )
+		fout.write( '#N: {}\n'.format(PWM[dinu]['N']) )
 		fout.write( '\t' + '\t'.join(bases) + '\n')
 		for i in xrange(len_pwm):
 			fout.write( "{}\t{}\n".format(positions[i], '\t'.join([ str(pwm[i][b]) for b in bases ])) )
@@ -146,8 +150,8 @@ def run(exon_fasta, intron_fasta, output_dir="./"):
 	if not os.path.exists(output_dir): os.makedirs(output_dir)
 	for dinu in PWMs:
 		if PWMs[dinu]['N'] >= 10:
-			print_PWM(PWMs[dinu]['5SS'], '{}_{}'.format(dinu, '5SS'), output_dir)
-			print_PWM(PWMs[dinu]['3SS'], '{}_{}'.format(dinu, '3SS'), output_dir)
+			print_PWM(PWMs, dinu, '5SS', output_dir)
+			print_PWM(PWMs, dinu, '3SS', output_dir)
 
 if __name__ == '__main__':
 
