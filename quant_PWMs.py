@@ -149,7 +149,6 @@ def quant_PWMs(exon_fasta, intron_fasta, PWM_files, soi_file):
 	print '#ID\tSEQUENCE\tSPLICE_SITE\t{}'.format( '\t'.join([ x for x in natsorted(PWMs) ]) )
 	for s in natsorted(soi):
 		print '{}\t{}\t{}\t{}'.format(s, soi[s]['seq'], soi[s]['SS'], '\t'.join([ '{}'.format(rescale_score(soi[s][x], PWMs[x][soi[s]['SS']]['min'], PWMs[x][soi[s]['SS']]['max'])) for x in natsorted(PWMs) ]) )
-		#print '{}\t{}\t{}\t{}'.format(s, soi[s]['seq'], soi[s]['SS'], '\t'.join([ '{}: {}'.format(x, rescale_score(soi[s][x], PWMs[x][soi[s]['SS']]['min'], PWMs[x][soi[s]['SS']]['max'])) for x in natsorted(soi[s]) if x not in ['seq', 'SS'] ]) )
 
 if __name__ == '__main__':
 
