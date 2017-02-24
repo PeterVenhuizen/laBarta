@@ -10,7 +10,6 @@ from natsort import natsorted
 from fileParser import yield_fasta
 from math import log
 import argparse
-import os
 
 def parse_fasta_file(fasta_file):
 	
@@ -76,7 +75,7 @@ def rescale_score(PWM_score, ss_min, ss_max):
         
     return norm_score
 
-def quant_PWMs(exon_fasta, intron_fasta, PWM_files, soi_file, output_dir="./"):
+def quant_PWMs(exon_fasta, intron_fasta, PWM_files, soi_file):
 
 	# Parse PWMs
 	PWMs = {}
@@ -147,8 +146,10 @@ def quant_PWMs(exon_fasta, intron_fasta, PWM_files, soi_file, output_dir="./"):
 						PWMs[dinu][ss] = update_min_max(seq, PWMs[dinu][ss])
 					except KeyError: pass
 
+	print '#ID\tSEQUENCE\tSPLICE_SITE\t{}'.format( '\t'.join([ x for x in natsorted(PWMs) ]) )
 	for s in natsorted(soi):
-		print '{}\t{}\t{}\t{}'.format(s, soi[s]['seq'], soi[s]['SS'], '\t'.join([ '{}: {}'.format(x, rescale_score(soi[s][x], PWMs[x][soi[s]['SS']]['min'], PWMs[x][soi[s]['SS']]['max'])) for x in natsorted(soi[s]) if x not in ['seq', 'SS'] ]) )
+		print '{}\t{}\t{}\t{}'.format(s, soi[s]['seq'], soi[s]['SS'], '\t'.join([ '{}'.format(rescale_score(soi[s][x], PWMs[x][soi[s]['SS']]['min'], PWMs[x][soi[s]['SS']]['max'])) for x in natsorted(PWMs) ]) )
+		#print '{}\t{}\t{}\t{}'.format(s, soi[s]['seq'], soi[s]['SS'], '\t'.join([ '{}: {}'.format(x, rescale_score(soi[s][x], PWMs[x][soi[s]['SS']]['min'], PWMs[x][soi[s]['SS']]['max'])) for x in natsorted(soi[s]) if x not in ['seq', 'SS'] ]) )
 
 if __name__ == '__main__':
 
@@ -157,7 +158,6 @@ if __name__ == '__main__':
 	parser.add_argument('-i', '--intron-fasta', help="Comma separated list of intron fasta files", required=True)
 	parser.add_argument('--PWM', required=True, help="PWM files (output from get_PWMs.py). Files are assumend to look like GT-AG_5SS.txt for example.", nargs='+')
 	parser.add_argument('--soi', required=True, help="Fasta files containing the sequences of interest.")
-	parser.add_argument('-o', '--output-dir', default="./", help="Output directory")
 	args = parser.parse_args()
 
-	quant_PWMs(args.exon_fasta, args.intron_fasta, args.PWM, args.soi, args.output_dir)
+	quant_PWMs(args.exon_fasta, args.intron_fasta, args.PWM, args.soi)
