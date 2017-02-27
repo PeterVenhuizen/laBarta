@@ -10,14 +10,11 @@
 	
 	Created on: 01-10-2015
 	Last changed: 22-02-2017
-	
-	To-do:
-	- 	Change parse_gtf(). Allow for missing exon_number attribute.
-	-	Add gff file support
 '''
 
 from __future__ import print_function
 import os
+import sys
 import argparse
 from natsort import natsorted
 from fileParser import parse_GTF
@@ -25,7 +22,7 @@ from fileParser import parse_GTF
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
 
-def get_longest_ref(trs):
+def get_longest_trs(trs):
 	""" Select the longest transcript """
 
 	import operator
@@ -250,9 +247,7 @@ def go_landscaping(transcripts, ref_id, event_type, detailed=False):
 
 		yield('\n'.join(bed_track))
 
-def run(gtf_file, ref, event_type, output_dir):
-	
-	if not os.path.exists(output_dir): os.makedirs(output_dir)
+def run(gtf_file, ref, event_type, detailed=True):
 
 	# Parse transcripts in the gtf_file
 	gtf = parse_GTF(gtf_file, select_feature="exon", get_introns=False)
@@ -298,8 +293,8 @@ if __name__ == '__main__':
 	parser.add_argument('-g', '--gtf', required=True, help="Transcripts in GTF format.")
 	parser.add_argument('-r', '--reference-trs', required=True, help="List of reference transcripts for the input GTF genes.")
 	parser.add_argument('-e', '--event-type', nargs='+', choices=AS_choices, default=AS_choices, help="AS events to look for.")
-	parser.add_argument('-o', '--output', default="./", help="Output path/file")
+	parser.add_argument('--detailed', help="Include event size difference.", action="store_true")
 	parser.add_argument('--version', action='version', version='v0.3.0')
 	args = parser.parse_args()
 
-	run(args.gtf, args.reference_trs, args.event_type, args.output)
+	run(args.gtf, args.reference_trs, args.event_type, )
