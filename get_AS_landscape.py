@@ -141,14 +141,14 @@ def go_landscaping(transcripts, ref_id, event_type, detailed=False):
 						if not alt_tss:
 							if (n_matching_ref and s != ref_exons[0][0]) or not n_matching_ref:
 								alt_tss = True
-								try: landscape['1'].append('ALT_TSS')
-								except KeyError: landscape['1'] = ['ALT_TSS']
+								#try: landscape['1'].append('ALT_TSS')
+								#except KeyError: landscape['1'] = ['ALT_TSS']
 
 				if 'SS' in event_type:
 					# 3) Alternative 3' splice site (ALT_3SS)
-					if i and ref_count > 1: # Skip the first exon
+					if i: # Skip the first exon
 
-						if n_matching_ref and trs_has_exon and not alt_intron and not alt_tss:
+						if n_matching_ref and trs_has_exon and not alt_intron:
 							if s != ref_exons[0][0]:
 
 								# Calculate transcript size difference
@@ -158,7 +158,7 @@ def go_landscaping(transcripts, ref_id, event_type, detailed=False):
 								try: landscape[str(i+1)].append( 'ALT_3SS({})'.format(diff) if detailed else 'ALT_3SS' )
 								except KeyError: landscape[(str(i+1))] = [ 'ALT_3SS({})'.format(diff) if detailed else 'ALT_3SS' ]
 
-								ref_SS[str(ref_count)] = 'ALT_3SS'
+								if not ref_count: ref_SS[str(ref_count)] = 'ALT_3SS'
 
 				if 'IR' in event_type:
 					# 4a) Reference intron retention / Potential exitron
@@ -203,7 +203,7 @@ def go_landscaping(transcripts, ref_id, event_type, detailed=False):
 
 				if 'SS' in event_type:
 					# 5) Alternative 5' splice site (ALT_5SS)
-					if i+1 != n_trs_exons and not alt_intron and not alt_tss: # Skip the last exons and alternative introns
+					if i and i+1 != n_trs_exons and not alt_intron: # Skip the last exons and alternative introns
 						
 						if n_matching_ref and trs_has_exon:
 							if e != ref_exons[-1][1]:
@@ -215,7 +215,7 @@ def go_landscaping(transcripts, ref_id, event_type, detailed=False):
 								try: landscape[str(i+1)].append('ALT_5SS({})'.format(diff) if detailed else 'ALT_5SS')
 								except KeyError: landscape[str(i+1)] = [ 'ALT_5SS({})'.format(diff) if detailed else 'ALT_5SS' ]
 
-								#ref_SS[str(ref_count)] = 'ALT_5SS'
+								ref_SS[str(ref_count)] = 'ALT_5SS'
 
 				if 'FL' in event_type:
 					# 6) Alternative transcription termination site (ALT_TTS), last
@@ -228,8 +228,8 @@ def go_landscaping(transcripts, ref_id, event_type, detailed=False):
 							# If it overlaps with an reference exon or not
 							if (n_matching_ref and e != ref_exons[-1][1]) or not n_matching_ref: 
 								alt_tss = True
-								try: landscape[str(i+1)].append('ALT_TTS')
-								except KeyError: landscape[str(i+1)] = ['ALT_TTS']
+								#try: landscape[str(i+1)].append('ALT_TTS')
+								#except KeyError: landscape[str(i+1)] = ['ALT_TTS']
 
 				if trs_has_exon: i += 1
 
@@ -245,9 +245,19 @@ def go_landscaping(transcripts, ref_id, event_type, detailed=False):
 					print_list[0].append(i)
 					bed_track.append( '{}\t{}\t{}\t{}|{}:{}\t1000\t{}'.format(c, bed_start, bed_end, ref_id, i, ref_IR[str(i)], strand) )
 
+				if str(ref_count) in ref_exon_skip and ref_count not in print_list[1]:
+					print_list[1].append(ref_count)
+					bed_track.append( '{}\t{}\t{}\t{}|{}:{}\t1000\t{}'.format(c, bed_start, bed_end, ref_id, ref_count, ref_exon_skip[str(ref_count)], strand) )
+
+				if str(ref_count) in ref_SS and ref_count not in print_list[2]:
+					print_list[2].append(ref_count)
+					ref_s, ref_e = ref_exons[0]
+					if ref_s > ref_e: ref_s, ref_e = ref_e, ref_s
+					bed_track.append( '{}\t{}\t{}\t{}|{}:{}\t1000\t{}'.format(c, ref_s, ref_e, ref_id, ref_count, ref_SS[str(ref_count)], strand) )
+
 		yield('\n'.join(bed_track))
 
-def run(gtf_file, ref, event_type, detailed=True):
+def run(gtf_file, ref, event_type, detailed=False):
 
 	# Parse transcripts in the gtf_file
 	gtf = parse_GTF(gtf_file, select_feature="exon", get_introns=False)
@@ -279,7 +289,7 @@ def run(gtf_file, ref, event_type, detailed=True):
 			# Check if the reference transcript is in the GTF file
 			# and run if everything is fine
 			try:
-				for bed_output in go_landscaping(transcripts, reference[g_id], event_type, True):
+				for bed_output in go_landscaping(transcripts, reference[g_id], event_type, detailed):
 					print(bed_output)
 
 			except KeyError:
@@ -297,4 +307,4 @@ if __name__ == '__main__':
 	parser.add_argument('--version', action='version', version='v0.3.0')
 	args = parser.parse_args()
 
-	run(args.gtf, args.reference_trs, args.event_type, )
+	run(args.gtf, args.reference_trs, args.event_type, args.detailed)
