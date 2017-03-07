@@ -27,8 +27,8 @@ def gtf2exon_intron(gtf_file, output_dir, select_feature="exon", t_id_attr="tran
 		for i, intron in enumerate(gtf[t]['introns']):
 			s, e = intron
 			size = abs(s-e)+1
-			if for_FA: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000{8}\n'.format(gtf[t]['chr'], s, e, t, i+1, s, "FORWARD" if gtf[t]['strand'] == '+' else "REVERSE", size, gtf[t]['strand']) )
-			else: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000{8}\n'.format(gtf[t]['chr'], s, e, t, i+1, s, "FORWARD" if gtf[t]['strand'] == '+' else "REVERSE", size, gtf[t]['strand']) )
+			if for_FA: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000\t{8}\n'.format(gtf[t]['chr'], s, e, t, i+1, s, "FORWARD" if gtf[t]['strand'] == '+' else "REVERSE", size, gtf[t]['strand']) )
+			else: fintron.write( '{0}\t{1}\t{2}\t{3}|intron-{4} | x-x | {0}:{5}-{2} {6} LENGTH={7}\t1000\t{8}\n'.format(gtf[t]['chr'], s, e, t, i+1, s, "FORWARD" if gtf[t]['strand'] == '+' else "REVERSE", size, gtf[t]['strand']) )
 
 	fintron.close()
 
@@ -63,4 +63,4 @@ if __name__ == '__main__':
 	parser.set_defaults(for_fasta=False)
 	args = parser.parse_args()
 
-	gtf2exon_intron(args.gtf, args.output_dir, args.select_feature, args.transcript_attr, args.attr_sep, args.base, args.for_fasta)
+	gtf2exon_intron(args.gtf, args.output_dir+'/', args.select_feature, args.transcript_attr, args.attr_sep, args.base, args.for_fasta)
