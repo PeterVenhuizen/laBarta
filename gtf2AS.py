@@ -2,6 +2,7 @@
 
 """
 Get all alternative splicing events from a GTF file.
+Replaces the get_AS_landscape.py script.
 """
 
 from __future__ import print_function
@@ -106,7 +107,7 @@ def get_SS(transcripts):
 							else:
 								ss, one, two = 'A5', '{}-{}'.format(shrd, iso1), '{}-{}'.format(shrd, iso2)
 
-							event_id = '{}:{}:{}:{}:{}'.format(c, ss, one, two, strand)
+							event_id = '{}:{}:{}:{}:{}'.format(ss, c, one, two, strand)
 							print( '{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "{4}:alternative1"; transcript_id "{4}:alternative1"; transcripts "{5}";'.format(c, one.split('-')[0], one.split('-')[1], strand, event_id, ';'.join(exonmap[one])) )
 							print( '{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "{4}:alternative2"; transcript_id "{4}:alternative2"; transcripts "{5}";'.format(c, two.split('-')[0], two.split('-')[1], strand, event_id, ';'.join(exonmap[two])) )
 
