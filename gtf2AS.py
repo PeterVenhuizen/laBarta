@@ -108,8 +108,8 @@ def get_SS(transcripts):
 								ss, one, two = 'A5', '{}-{}'.format(shrd, iso1), '{}-{}'.format(shrd, iso2)
 
 							event_id = '{}:{}:{}:{}:{}'.format(ss, c, one, two, strand)
-							print( '{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "{4}:alternative1"; transcript_id "{4}:alternative1"; transcripts "{5}";'.format(c, one.split('-')[0], one.split('-')[1], strand, event_id, ';'.join(exonmap[one])) )
-							print( '{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "{4}:alternative2"; transcript_id "{4}:alternative2"; transcripts "{5}";'.format(c, two.split('-')[0], two.split('-')[1], strand, event_id, ';'.join(exonmap[two])) )
+							print( '{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "{4}:alternative1"; transcript_id "{4}:alternative1"; transcripts "{5}";'.format(c, one.split('-')[0], one.split('-')[1], strand, event_id, ','.join(exonmap[one])) )
+							print( '{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "{4}:alternative2"; transcript_id "{4}:alternative2"; transcripts "{5}";'.format(c, two.split('-')[0], two.split('-')[1], strand, event_id, ','.join(exonmap[two])) )
 
 				except KeyError: pass # No overlaps
 
@@ -139,7 +139,7 @@ def get_ES(transcripts):
 						except KeyError: es_events[es] = set([other_t])
 
 	for es in natsorted(es_events):
-		print('{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "ES:{0}:{1}-{2}:{3}"; transcript_id "ES:{0}:{1}-{2}:{3}"; transcripts "{4}";'.format(c, es.split('-')[0], es.split('-')[1], strand, ';'.join(natsorted(es_events[es]))))
+		print('{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "ES:{0}:{1}-{2}:{3}"; transcript_id "ES:{0}:{1}-{2}:{3}"; transcripts "{4}";'.format(c, es.split('-')[0], es.split('-')[1], strand, ','.join(natsorted(es_events[es]))))
 
 def get_IR(transcripts):
 	
@@ -174,7 +174,7 @@ def get_IR(transcripts):
 								except KeyError: ir_events[event_id] = set([ t_id ])
 
 	for ir in natsorted(ir_events):
-		print( '{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "IR:{0}:{1}-{2}:{3}"; transcript_id "IR:{0}:{1}-{2}:{3}"; transcripts "{4}";'.format(chromosome, ir.split('-')[0], ir.split('-')[1], strand, ';'.join(natsorted(ir_events[ir]))) )
+		print( '{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "IR:{0}:{1}-{2}:{3}"; transcript_id "IR:{0}:{1}-{2}:{3}"; transcripts "{4}";'.format(chromosome, ir.split('-')[0], ir.split('-')[1], strand, ','.join(natsorted(ir_events[ir]))) )
 
 def run(gtf_file, event_type):
 
