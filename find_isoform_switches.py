@@ -96,6 +96,8 @@ def find_isoform_switches(s1_files, s2_files, selection_file, output_dir):
 
 			subprocess.call("Rscript save_dot_plot.R", shell=True)
 
+	subprocess.call("rm save_dot_plot.R", shell=True)
+
 if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser(description=__doc__)
