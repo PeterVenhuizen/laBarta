@@ -158,6 +158,7 @@ def get_IR(transcripts):
 
 					# Get all the overlapping exons
 					matches = [ [x, y] for x, y in transcripts[other_t]['exons']  if is_overlapping(s, e, x, y) ]
+
 					if len(matches) > 1:
 
 						# Check whether the overlapping exons are actually not 
@@ -166,12 +167,12 @@ def get_IR(transcripts):
 						if any([ not is_overlapping(a, b, c, d) for c, d in matches[1:] ]):
 
 							# Only select intron retention events with the same boundaries
-							left = min([ min(x, y) for x, y in matches ])
-							right = max([ max(x, y) for x, y in matches ])
-							if natsorted([left, right]) == natsorted([s, e]):
+							#left = min([ min(x, y) for x, y in matches ])
+							#right = max([ max(x, y) for x, y in matches ])
+							#if natsorted([left, right]) == natsorted([s, e]):
 
-								try: ir_events[event_id].add(t_id)
-								except KeyError: ir_events[event_id] = set([ t_id ])
+							try: ir_events[event_id].add(t_id)
+							except KeyError: ir_events[event_id] = set([ t_id ])
 
 	for ir in natsorted(ir_events):
 		print( '{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "IR:{0}:{1}-{2}:{3}"; transcript_id "IR:{0}:{1}-{2}:{3}"; transcripts "{4}";'.format(chromosome, ir.split('-')[0], ir.split('-')[1], strand, ','.join(natsorted(ir_events[ir]))) )
