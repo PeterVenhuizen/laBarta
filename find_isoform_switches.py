@@ -39,7 +39,8 @@ def all_switched(g_id, s1, s2):
 				one = "before" if names1.index(x1) < names1.index(x2) else "after"
 				two = "before" if names2.index(x1) < names2.index(x2) else "after"
 
-				if one != two and all([ s1[i][g_id][x1] >= 1, s1[i][g_id] >= 1, s2[i][g_id] >= 1, s2[i][g_id] >= 1 ]):
+				if one != two and any([ s1[i][g_id][x1] >= 1, s2[i][g_id][x1] >= 1 ]) and any([ s1[i][g_id][x2] >= 1, s2[i][g_id][x2] >= 1 ]):
+				#if one != two and all([ s1[i][g_id][x1] >= 1, s1[i][g_id][x2] >= 1, s2[i][g_id][x1] >= 1, s2[i][g_id][x2] >= 1 ]):
 					switches[x1+'-'+x2] += 1
 
 	is_switched = False
@@ -54,7 +55,7 @@ def all_switched(g_id, s1, s2):
 
 	return is_switched
 
-def find_isoform_switches(s1_files, s2_files, selection_file, output_dir):
+def find_isoform_switches(s1_files, s2_files, selection_file, output_dir, labels):
 	
 	s1 = [ parse_salmon(f) for f in s1_files ]
 	s2 = [ parse_salmon(f) for f in s2_files ]
@@ -74,7 +75,7 @@ def find_isoform_switches(s1_files, s2_files, selection_file, output_dir):
 
 				fout.write( "df <- data.frame(\n" )
 				fout.write( "\tisoform = rep(c( {} ), each=2),\n".format( ', '.join(['"'+t+'"' for t in t_ids])) )
-				fout.write( "\tcondition = rep(c( \"ST\", \"7-1-1\" ), {}),\n".format( len(t_ids) ) )
+				fout.write( "\tcondition = rep(c( \"{}\", \"{}\" ), {}),\n".format( labels[0], labels[1], len(t_ids) ) )
 
 				fout.write( "\tTPM_avg = c(\n" )
 				fout.write( ',\n'.join([ "\t\t{}, {}".format( np.mean([ s[g_id][t] for s in s1 ]), np.mean([ s[g_id][t] for s in s2 ]) ) for t in t_ids ]) )
@@ -84,7 +85,7 @@ def find_isoform_switches(s1_files, s2_files, selection_file, output_dir):
 				fout.write( ',\n'.join([ "\t\t{}, {}".format( np.std([ s[g_id][t] for s in s1 ]), np.std([ s[g_id][t] for s in s2 ]) ) for t in t_ids ]) )
 				fout.write( "\n\t)\n)")
 
-				fout.write( "\ndf$condition <- factor(df$condition, levels=c(\"ST\", \"7-1-1\"))" )
+				fout.write( "\ndf$condition <- factor(df$condition, levels=c(\"{}\", \"{}\"))".format( labels[0], labels[1] ) )
 				fout.write( "\nlimits <- aes(ymax = TPM_avg + stdev, ymin = TPM_avg - stdev, colour=isoform)")
 				fout.write( "\npng(file=\"{}/{}.png\", width=450, height=600)".format(output_dir, g_id) )
 				fout.write( "\nggplot(data=df, aes(x=condition, y=TPM_avg, group=isoform)) +" )
@@ -108,4 +109,4 @@ if __name__ == '__main__':
 	parser.add_argument('--selection', help="Gene selection file. Gene identifier should be in the first column.")
 	args = parser.parse_args()
 
-	find_isoform_switches(args.s1, args.s2, args.selection, args.output_dir)
+	find_isoform_switches(args.s1, args.s2, args.selection, args.output_dir, args.labels)
