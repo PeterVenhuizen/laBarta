@@ -80,7 +80,7 @@ def quant_PWMs(exon_fasta, intron_fasta, PWM_files, soi_file):
 	# Parse PWMs
 	PWMs = {}
 	for f in PWM_files:
-		di, ss = f.split('/')[-1].split('.')[0].split('_')
+		di, ss = f.split('/')[-1].split('.')[0].split('_')[:2]
 		try: 
 			PWMs[di][ss] = { 'pwm': read_PWM_from_file(f), 'min': 0, 'max': 0 }
 		except KeyError: 
