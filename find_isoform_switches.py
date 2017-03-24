@@ -3,11 +3,6 @@
 """
 Generate connected dot plots for each gene
 and try to identify isoform switches.
-
-To-do: 
-	* Output all switched isoforms to stdout
-	* Plot the mean values
-	* Add error bars
 """
 
 from __future__ import division
