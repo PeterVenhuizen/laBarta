@@ -102,10 +102,10 @@ def get_SS(transcripts):
 						if frozenset(sorted([shrd, iso1, iso2])) not in done:
 							done.add(frozenset(sorted([shrd, iso1, iso2])))
 
-							if index:
-								ss, one, two = 'A3', '{}-{}'.format(iso1, shrd), '{}-{}'.format(iso2, shrd)
-							else:
-								ss, one, two = 'A5', '{}-{}'.format(shrd, iso1), '{}-{}'.format(shrd, iso2)
+							if index and strand == '+': ss, one, two = 'A3', '{}-{}'.format(iso1, shrd), '{}-{}'.format(iso2, shrd)
+							elif index and strand == '-': ss, one, two = 'A5', '{}-{}'.format(iso1, shrd), '{}-{}'.format(iso2, shrd)
+							elif strand == '+': ss, one, two = 'A5', '{}-{}'.format(shrd, iso1), '{}-{}'.format(shrd, iso2)
+							else: ss, one, two = 'A3', '{}-{}'.format(shrd, iso1), '{}-{}'.format(shrd, iso2)
 
 							event_id = '{}:{}:{}:{}:{}'.format(ss, c, one, two, strand)
 							print( '{0}\tgtf2AS\texon\t{1}\t{2}\t.\t{3}\t.\tgene_id "{4}:alternative1"; transcript_id "{4}:alternative1"; transcripts "{5}";'.format(c, one.split('-')[0], one.split('-')[1], strand, event_id, ','.join(exonmap[one])) )
