@@ -70,12 +70,13 @@ class Sequence(object):
 		
 		return sum([self.sequence.count(char) for char in chars.upper()])/self.get_length()
     
-	def get_base_frequency(self):
+	def get_base_frequency(self, to_percent=False):
 		''' Return the base composition counts for the sequence.
 		A dictionary is created containing the counts for each
 		unique character in the sequence. '''
 		
-		return { b: self.sequence.count(b) for b in set(self.sequence) }
+		if to_percent: return { b: self.sequence.count(b)/self.get_length() for b in set(self.sequence) }
+		else: return { b: self.sequence.count(b) for b in set(self.sequence) }
 	
 	def get_kmer_frequency(self, kmer_size=3):
 		''' Return the kmer frequencies for the sequence. A counter
