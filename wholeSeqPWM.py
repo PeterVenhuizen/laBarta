@@ -46,7 +46,19 @@ def wholeSeqPWM(background_fasta, soi_fasta, PWM_files, min_score=65):
 		kmers = {}
 		# Iterate over sequences and score the kmers in the same
 		# size as the PWMs.
+		
+		# Only use the background sequences for the PWM score scaling
 		for record in yield_fasta(background_fasta):
+			N = (len(record.seq)-k)+1
+			for i in xrange(0, N, 1):
+				
+				score = score_seq(record.seq[i:i+k], PWM['pwm'])
+				PWM['min'] = score if score < PWM['min'] else PWM['min']
+				PWM['max'] = score if score > PWM['max'] else PWM['max']
+		
+		# Score and store the kmers in the SOIs and save the 
+		# sequence identifiers matching the kmers.
+		for record in yield_fasta(soi_fasta):
 			
 			N = (len(record.seq)-k)+1
 			for i in xrange(0, N, 1):
@@ -62,10 +74,17 @@ def wholeSeqPWM(background_fasta, soi_fasta, PWM_files, min_score=65):
 					kmers[kmer] = { 'score': score, 'IDs': set([ record.id ]) }
 
 					# Update min and max scores
-					PWM['min'] = score if score < PWM['min'] else pwm['min']
-					PWM['max'] = score if score > PWM['max'] else pwm['max']
-	
-	# Rescale the scores and output hits above the min_score cutoff
+					PWM['min'] = score if score < PWM['min'] else PWM['min']
+					PWM['max'] = score if score > PWM['max'] else PWM['max']
+					
+		# Rescale the scores and output hits above the min_score cutoff
+		for kmer in natsorted(kmers):
+			
+			if kmer['score'] > 0: norm_score = ((50*kmer['score'])/PWM['max'])+50
+			else: norm_score = -(50*(kmer['score']-PWM['min'])/PWM['min'])
+				
+			if norm_score >= min_score:
+				pass
 
 if __name__ == '__main__':
 	
