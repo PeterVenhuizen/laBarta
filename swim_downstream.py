@@ -12,15 +12,11 @@ import argparse
 import math
 import os
 
-def calculate_isoform_ratios(s1_files, s2_files, ref_file, labels=['one', 'two'], output_dir="./isoform_ratios/"):
+from scipy.stats import ttest_ind, mannwhitneyu
+from statsmodels.sandbox.stats.multicomp import multipletests
 
-	from scipy.stats import ttest_ind
-	from statsmodels.sandbox.stats.multicomp import multipletests
-	
-	if not os.path.exists(output_dir): os.makedirs(output_dir)
+def calculate_isoform_ratios(s1, s2, ref_file, labels=['one', 'two'], output_dir="./isoform_ratios/"):
 
-	s1 = [ parse_salmon(f) for f in s1_files ]
-	s2 = [ parse_salmon(f) for f in s2_files ]
 	ref_isoforms = { line.rstrip().split('.')[0]: line.rstrip() for line in open(ref_file) }
 
 	output = []
@@ -44,23 +40,36 @@ def calculate_isoform_ratios(s1_files, s2_files, ref_file, labels=['one', 'two']
 			#fout.write( '{}\t{}\t{}\t{:.7f}\t{:.7f}\n'.format(t_id, '\t'.join([ '{:.3f}'.format(x) for x in TPM ]), '\t'.join([ '{:.3f}'.format(s) for s in s1_ratios+s2_ratios ]), pval, pvals_corrected[i]) )
 			fout.write( '{}\t{}\t{:.7f}\t{:.7f}\n'.format(t_id, '\t'.join([ '{:.3f}'.format(s) for s in s1_ratios+s2_ratios ]), pval, pvals_corrected[i]) )
 
-def find_isoform_switches(s1_files, s2_files, labels=['one', 'two'], output_dir="./isoform_switches/"):
+def find_changes(s1, s2, labels=['one', 'two'], output_dir="./isoform_changes/"):
 
-	from collections import Counter
+	output = []
+	genes = s1[0].keys()
+	for g_id in natsorted(genes):
+		t_ids = natsorted(s1[0][g_id].keys())
+		for t_id in t_ids:
+			#pval = ttest_ind([float(s[g_id][t_id]) for s in s1], [float(s[g_id][t_id]) for s in s2])[1]
+			#pval = 1 if math.isnan(pval) else pval
+			try: pval = mannwhitneyu([float(s[g_id][t_id]) for s in s1], [float(s[g_id][t_id]) for s in s2])[1]
+			except ValueError: pval = 1
+			output.append([ t_id, [ s[g_id][t_id] for s in s1+s2 ], pval ])
+
+	reject, pvals_corrected, alpha_sidk, alpha_bonf = multipletests([ output[i][-1] for i in xrange(len(output)) ], method='fdr_bh')
+	with open('{}{}-{}_change.txt'.format(output_dir, labels[0], labels[1]), 'w') as fout:
+		for i in xrange(len(output)):
+			t_id, TPM, pval = output[i]
+			fout.write( '{}\t{}\t{:.7f}\t{:.7f}\n'.format(t_id, '\t'.join([ '{:.3f}'.format(x) for x in TPM ]), pval, pvals_corrected[i]) )
+
+def find_isoform_switches(s1, s2, labels=['one', 'two'], output_dir="./isoform_switches/"):
+
 	import subprocess
 	import operator
-
-	s1 = [ parse_salmon(f) for f in s1_files ]
-	s2 = [ parse_salmon(f) for f in s2_files ]
-
-	if not os.path.exists(output_dir): os.makedirs(output_dir)
 
 	genes = s1[0].keys()
 	for g_id in natsorted(genes):
 		t_ids = natsorted(s1[0][g_id].keys())
 
 		# Look for isoform switches
-		switches = Counter()
+		switches = {}
 		N = len(s1)
 
 		for i in xrange(N):
@@ -80,13 +89,15 @@ def find_isoform_switches(s1_files, s2_files, labels=['one', 'two'], output_dir=
 					# Only take those switches for which the expression is >= 1 TPM 
 					# in at least one condition for each isoform. 
 					if one != two and any([ s1[i][g_id][x1] >= 1, s2[i][g_id][x1] >= 1 ]) and any([ s1[i][g_id][x2] >= 1, s2[i][g_id][x2] >= 1 ]):
-						switches[x1+'-'+x2] += 1
+						try: switches[x1+'-'+x2].append( one+"-"+two )
+						except KeyError: switches[x1+'-'+x2] = [ one+'-'+two ]
 
 		# Only output switches which are present in all replicates
+		# and make sure that the switches are all in the same direction
 		is_switched = False
 		printed = set()
 		for x in switches:
-			if switches[x] == N:
+			if len(switches[x]) == N and len(set(switches[x])) == 1:
 				x1, x2, = natsorted(x.split('-'))
 				if (x1, x2) not in printed:
 					printed.add((x1, x2))
@@ -144,8 +155,23 @@ if __name__ == '__main__':
 	parser_b.add_argument('-l', '--labels', nargs='+', default=['one', 'two'], help="Condition labels.")
 	parser_b.add_argument('-o', '--output-dir', default="./isoform_switches/", help="Output directory.")
 
+	parser_c = subparsers.add_parser('get-changes', help="Look for isoform expression changes.")
+	parser_c.add_argument('-s1', required=True, nargs='+', help="Condition one Salmon file(s).")
+	parser_c.add_argument('-s2', required=True, nargs='+', help="Condition two Salmon file(s).")
+	parser_c.add_argument('-l', '--labels', nargs='+', default=['one', 'two'], help="Condition labels.")
+	parser_c.add_argument('-o', '--output-dir', default="./isoform_switches/", help="Output directory.")
+
 	args = parser.parse_args()
+
+	if len(args.command):
+
+		if not os.path.exists(args.output_dir): os.makedirs(args.output_dir)
+		s1 = [ parse_salmon(f) for f in args.s1 ]
+		s2 = [ parse_salmon(f) for f in args.s2 ]
+
 	if args.command == "get-ratios":
-		calculate_isoform_ratios(args.s1, args.s2, args.ref, args.labels, args.output_dir+'/')
+		calculate_isoform_ratios(s1, s2, args.ref, args.labels, args.output_dir+'/')
 	elif args.command == "get-switches":
-		find_isoform_switches(args.s1, args.s2, args.labels, args.output_dir+'/')
+		find_isoform_switches(s1, s2, args.labels, args.output_dir+'/')
+	elif args.command == "get-changes":
+		find_changes(s1, s2, args.labels, args.output_dir+'/')
