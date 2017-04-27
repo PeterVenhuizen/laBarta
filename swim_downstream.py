@@ -63,7 +63,7 @@ def schooling(s1_files, s2_files, groups=['a', 'b'], mode='TPM', ref_file=None):
 			except KeyError: ref = max(s1[0][g_id].iteritems(), key=operator.itemgetter(1))[0]
 
 			# Check whether the reference isoform is expressed
-			if all([ s[g_id][ref] == 0 for s in s1+s2 ]): eprint('WARNING: Reference isoform {} is not expressed!'.format(ref))
+			if all([ s[g_id][ref] == 0 for s in s1+s2 ]): eprint(ref)
 
 			if mode == 'ratio':
 				
