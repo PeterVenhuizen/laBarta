@@ -14,8 +14,8 @@ import subprocess
 from utils import add_slash
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('-e', '--exon-fasta', nargs='+', required=True, help="Exon fasta file(s).")
-parser.add_argument('-i', '--intron-fasta', nargs='+', required=True, help="Intron fasta files(s).")
+parser.add_argument('-e', '--exon-fasta', required=True, help="Exon fasta file(s).")
+parser.add_argument('-i', '--intron-fasta', required=True, help="Intron fasta files(s).")
 parser.add_argument('-o', '--output-dir', required=True, help="Output directory.")
 parser.add_argument('-k', '--kmer', default=50, type=int, help="K-mer size (default = 50)")	
 parser.add_argument('-m', '--move-by', default=1, type=int, help="Move the sliding window by m nt (default = 1)")
