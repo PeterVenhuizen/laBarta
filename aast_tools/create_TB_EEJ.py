@@ -59,7 +59,7 @@ def create_TB_EEJ(exon_files, output_dir, k=50, m=1, GENOME_FASTA="/home/venhuip
 		fout.write( '#!/bin/bash\n' )
 
 		# Create TAIR10 + EEJ index
-		cmd = 'bowtie-build {0}},{1}TB_lib.fa {1}TAIR10_TB_lib &> /dev/null'.format(GENOME_FASTA, output_dir)
+		cmd = 'bowtie-build {0},{1}TB_lib.fa {1}TAIR10_TB_lib &> /dev/null'.format(GENOME_FASTA, output_dir)
 		fout.write(cmd+'\n')
 
 		# Index EEJ library
