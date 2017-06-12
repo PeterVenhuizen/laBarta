@@ -545,7 +545,7 @@ if __name__ == '__main__':
 	parser_a.add_argument('-g', '--genome-gff', required=True, help="Genome GTF/GFF annotation file.")
 	parser_a.add_argument('-r', '--ref', required=True, help="List of representative gene models (transcripts).")
 	parser_a.add_argument('-j', '--junctions', required=True, nargs='+', help="Junction bed files to use.")
-	parser_a.add_argument('-n', '--names', required=True, help="Comma seperated list of condition names, e.g. WT,WT,WT,RS31_OX,RS31_OX,RS31_OX")
+	parser_a.add_argument('-n', '--names', required=True, nargs='+', help="List of condition names, e.g. WT WT WT OX OX OX")
 	parser_a.add_argument('-o', '--output-dir', required=True, help="Output directory.")
 	parser_a.add_argument('-m', '--min-support', type=int, default=3, help="Minimum required junction support.")
 	parser_a.add_argument('-f', '--feature', default="CDS", help="GTF/GFF feature to select.")
@@ -593,7 +593,7 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 	if args.command == "prepare-junctions":
-		prepare_junction_lib(args.genome_gff, args.ref, args.junctions, args.names.split(','), add_slash(args.output_dir), args.min_support, args.feature)
+		prepare_junction_lib(args.genome_gff, args.ref, args.junctions, args.names, add_slash(args.output_dir), args.min_support, args.feature)
 	elif args.command == "AStalavista-EI":
 		get_ASta_retained_introns(args.genome_gff, args.ref, args.asta, add_slash(args.output_dir), args.feature)
 	elif args.command == "intron-EI":
