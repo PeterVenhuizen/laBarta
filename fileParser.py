@@ -6,6 +6,7 @@ Collection of often used file parsers
 
 from natsort import natsorted
 import sys
+import gzip
 
 def yield_salmon(f):
 	""" Yield salmon output per line """
@@ -182,21 +183,23 @@ def yield_junctions(f):
 	""" Yield each line as a dictionary. """
 
 	for line in open(f):
-		cols = line.rstrip().split('\t')
-		yield({
-			'chr': cols[0],
-			'start': cols[1],
-			'end': cols[2],
-			'junction_id': cols[3],
-			'depth': int(cols[4]),
-			'strand': cols[5],
-			'rgb': cols[8],
-			'block_size': cols[9],
-			'blocks': cols[10],
-			'junc_start': int(cols[1]) + int(cols[10].split(',')[0]),
-			'junc_end': int(cols[2]) - int(cols[10].split(',')[1]),
-			'misc': cols[11]
-			})
+		try: 
+			cols = line.rstrip().split('\t')
+			yield({
+				'chr': cols[0],
+				'start': cols[1],
+				'end': cols[2],
+				'junction_id': cols[3],
+				'depth': int(cols[4]),
+				'strand': cols[5],
+				'rgb': cols[8],
+				'block_size': cols[9],
+				'blocks': cols[10],
+				'junc_start': int(cols[1]) + int(cols[10].split(',')[0]),
+				'junc_end': int(cols[2]) - int(cols[10].split(',')[1]),
+				'misc': cols[11]
+				})
+		except IndexError: pass
 
 def yield_bed(f):
 
