@@ -108,14 +108,14 @@ def extract_ref_features(genome_gff, repr_file, output_dir="./", GFF_feature="CD
 
 	return trs, exon2id, bins
 
-def prepare_junction_lib(genome_gff, repr_file, junction_files, sample_names, output_dir="./", min_support=3, GFF_feature="CDS"):
-	
-	# Check 
+def prepare_junction_lib(genome_gff, repr_file, junction_files, sample_names, output_dir="./", exitron_bed=None, min_support=3, GFF_feature="CDS"):
+
+	# Check the number of files
 	if len(junction_files) != len(sample_names):
 		sys.stderr.write("The number of junction files and sample names should be the same! Aborting...")
 		sys.exit(1)
 
-	# Get shared sample junctions and merge
+	# Get the shared sample junction
 	junction_sets = []
 	uniq_names = set(sample_names)
 	for n in natsorted(uniq_names):
@@ -123,34 +123,38 @@ def prepare_junction_lib(genome_gff, repr_file, junction_files, sample_names, ou
 		junction_sets.append( get_shared_junctions([ junction_files[i] for i in indices ]) )
 	all_junctions = set.union(*junction_sets)
 
+	# Add existing exitrons when supplied
+	if os.path.isfile(exitron_bed):
+		existing_EI = set([ ( r['c'], r['s'], r['e']-1, r['strand'] ) for r in yield_bed(exitron_bed) ])
+		all_junctions = all_junctions.union(existing_EI)
+
 	# Extract features from reference annotation
 	trs, exon2id, bins = extract_ref_features(genome_gff, repr_file, output_dir, GFF_feature)
 
 	# Map junctions to features
-	with open(output_dir+'junction_map.txt', 'w') as fout:
-		for j in natsorted(all_junctions):
-			
-			c, s, e, strand = j
-			candidates, match = {}, None
-			bin_codes = get_bin(s, e, 5000)
+	for j in natsorted(all_junctions):
+		
+		c, s, e, strand = j
+		candidates, match = {}, None
+		bin_codes = get_bin(s, e, 5000)
 
-			for bin_code in bin_codes:
-				try:
-					if bin_code in bins[strand][c]:
-						for x, y in natsorted(bins[strand][c][bin_code]):
+		for bin_code in bin_codes:
+			try:
+				if bin_code in bins[strand][c]:
+					for x, y in natsorted(bins[strand][c][bin_code]):
 
-							if is_contained_in(x, y, s, e):
-								exon = exon2id['{}:{}-{}'.format(c, x, y)][0]
-								candidates[exon] = { 'start': int(x), 'end': int(y) }
-				except KeyError: pass
+						if is_contained_in(x, y, s, e):
+							exon = exon2id['{}:{}-{}'.format(c, x, y)][0]
+							candidates[exon] = { 'start': int(x), 'end': int(y) }
+			except KeyError: pass
 
-			if len(candidates) == 1: match = ''.join(candidates.keys())
-			elif len(candidates) > 1: 
-				feature_lengths = { exon: candidates[exon]['end'] - candidates[exon]['start'] for exon in candidates }
-				match = max(feature_lengths, key=feature_lengths.get)
+		if len(candidates) == 1: match = ''.join(candidates.keys())
+		elif len(candidates) > 1: 
+			feature_lengths = { exon: candidates[exon]['end'] - candidates[exon]['start'] for exon in candidates }
+			match = max(feature_lengths, key=feature_lengths.get)
 
-			if match != None:
-				fout.write( '{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(c, candidates[match]['start'], candidates[match]['end'], strand, match, s, e) )
+		if match != None:
+			print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(c, candidates[match]['start'], candidates[match]['end'], strand, match, s, e)
 
 def get_EI_from_introns(genome_gff, repr_file, introns_bed, output_dir="./", GFF_feature="CDS"):
 
@@ -546,7 +550,8 @@ if __name__ == '__main__':
 	parser_a.add_argument('-r', '--ref', required=True, help="List of representative gene models (transcripts).")
 	parser_a.add_argument('-j', '--junctions', required=True, nargs='+', help="Junction bed files to use.")
 	parser_a.add_argument('-n', '--names', required=True, nargs='+', help="List of condition names, e.g. WT WT WT OX OX OX")
-	parser_a.add_argument('-o', '--output-dir', required=True, help="Output directory.")
+	parser_a.add_argument('-o', '--output-dir', default=".", help="Output directory.")
+	parser_a.add_argument('-e', '--exitrons', default=None, help="Existing exitron bed file.")
 	parser_a.add_argument('-m', '--min-support', type=int, default=3, help="Minimum required junction support.")
 	parser_a.add_argument('-f', '--feature', default="CDS", help="GTF/GFF feature to select.")
 
@@ -593,7 +598,7 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 	if args.command == "prepare-junctions":
-		prepare_junction_lib(args.genome_gff, args.ref, args.junctions, args.names, add_slash(args.output_dir), args.min_support, args.feature)
+		prepare_junction_lib(args.genome_gff, args.ref, args.junctions, args.names, add_slash(args.output_dir), args.exitrons, args.min_support, args.feature)
 	elif args.command == "AStalavista-EI":
 		get_ASta_retained_introns(args.genome_gff, args.ref, args.asta, add_slash(args.output_dir), args.feature)
 	elif args.command == "intron-EI":
