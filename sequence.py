@@ -60,8 +60,9 @@ class Sequence(object):
 			if len(codon) == 3:
 				try: protein.append(next(v for k, v in aa_dict.items() if codon in k))
 				except StopIteration: protein.append('X')
+				codon = ''
 		
-		return ''.join(protein)
+		return ''.join(protein), codon
 	
 	def get_base_content(self, chars):
 		''' Return the percentage of bases in the sequence. 
