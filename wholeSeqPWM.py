@@ -78,13 +78,13 @@ def wholeSeqPWM(background_fasta, soi_fasta, PWM_files, min_score=65):
 					PWM['max'] = score if score > PWM['max'] else PWM['max']
 					
 		# Rescale the scores and output hits above the min_score cutoff
-		for kmer in natsorted(kmers):
+		for k in natsorted(kmers):
 			
-			if kmer['score'] > 0: norm_score = ((50*kmer['score'])/PWM['max'])+50
-			else: norm_score = -(50*(kmer['score']-PWM['min'])/PWM['min'])
+			if kmers[k]['score'] > 0: norm_score = ((50*kmers[k]['score'])/PWM['max'])+50
+			else: norm_score = -(50*(kmers[k]['score']-PWM['min'])/PWM['min'])
 				
 			if norm_score >= min_score:
-				pass
+				for t_id in kmers[k]['IDs']: print '{}\t{}\t{:.2f}'.format(t_id, k, norm_score)
 
 if __name__ == '__main__':
 	
@@ -95,4 +95,4 @@ if __name__ == '__main__':
 	parser.add_argument('--min-score', type=int, default=65, help="Minimal PWM score cutoff for sequence reporting")
 	args = parser.parse_args()
 	
-	
+	wholeSeqPWM(args.background, args.soi, args.PWM, args.min_score)
