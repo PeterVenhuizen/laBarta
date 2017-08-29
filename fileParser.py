@@ -216,3 +216,12 @@ def yield_bed(f):
 			print "Missing start or end information. Aborting..."
 			sys.exit()
 		yield(d)
+
+def parse_vcf(f):
+
+	vcf = {}
+	for line in open(f):
+		if not line.startswith('#'):
+			CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO = line.rstrip().split('\t')[:8]
+			vcf['{}:{}:{}-{}'.format(CHROM, POS, REF, ALT)] = { 'ID': ID, 'REF': REF, 'ALT': ALT, 'QUAL': float(QUAL), 'FILTER': FILTER, 'INFO': INFO }
+	return vcf
