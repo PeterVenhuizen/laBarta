@@ -5,6 +5,7 @@ A collection of miscellaneous useful functions.
 """
 
 def roundrobin(*iterables):
+	import itertools
     "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
     # Recipe credited to George Sakkis
     pending = len(iterables)
