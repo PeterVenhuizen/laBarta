@@ -20,7 +20,7 @@ def schooling(s1_files, s2_files, groups=['a', 'b'], mode='TPM', ref_file=None):
 
 	""" 
 		Group the Salmon files into one output stream.
-		Example output line: G_ID\tT_ID\tA_1\tA_2\tA_3\tB_1\tB_2\t_B3
+		Example output line: G_ID\tT_ID\tA_1\tA_2\tA_3\tB_1\tB_2\tB_3
 		The values for A and B can take the shape of
 		either the "raw" TPM values, the isoform ratios
 		based on the gene reference isoform or the splicing 
