@@ -9,6 +9,8 @@ mxi.py => Detect Mutually Exclusive Introns in a given GTF file.
 
 	---|||||-----|||||-----|||||---
 
+	AStalavista MXI code => 1^2-,3^4-
+
 """
 
 import argparse
@@ -50,7 +52,6 @@ def mxi(gtf_file):
 	for g_id in natsorted(groups):
 
 		if len(groups[g_id]) > 1:
-		#if g_id == "AT1G03290":
 
 			transcripts = { t_id: gtf[t_id] for t_id in groups[g_id] }
 			first_id = transcripts.keys()[0]
@@ -75,12 +76,8 @@ def mxi(gtf_file):
 								a, b = matches[0]
 								if any([ not is_overlapping(a, b, c, d) for c, d in matches[1:] ]):
 
-									#print t_id, a, b, c, d
-
 									try: ir_events[event_id].add(t_id)
 									except KeyError: ir_events[event_id] = set([ t_id ])
-
-			#print ir_events
 
 			# Retrieve the retained introns
 			all_introns = set([ (x, y) for x, y in list(itertools.chain(*[ transcripts[t_id]['introns'] for t_id in transcripts ])) ])
@@ -104,28 +101,16 @@ def mxi(gtf_file):
 				matches = [ [x, y] for x, y in all_IR if is_overlapping(s, e, x, y) ]
 				if len(matches):
 
+					# Check that the retained introns are not the same and 
+					# that they share a common "middle" exon
 					ir1, ir2 = [ '{}-{}'.format(x, y) for x, y in natsorted([[s, e], [matches[0][0], matches[0][1]]]) ]
-
 					if ret_introns[ir1] != ret_introns[ir2] and ret_introns[ir1][1]+1 == int(ir2.split('-')[0]):
 
 						try: 
-							#print g_id
-							#print ir1, ret_introns[ir1]
-							#print ir2, ret_introns[ir2]
-
 							ir1_alt = '{}-{}'.format(*ret_introns[ir1])
 							ir2_alt = '{}-{}'.format(*ret_introns[ir2])
-
 							print '{0}\t{1}\t{1};MXI:{0}:{2}:{3}-{4}:{5}-{6}:{7}:{8}\t{9}\t{10}'.format(chromosome, g_id, ir1.split('-')[0], ret_introns[ir1][0], ret_introns[ir1][1], ret_introns[ir2][0], ret_introns[ir2][1], ir2.split('-')[1], strand, ','.join(alt_trs[ir1_alt]), ','.join(alt_trs[ir1_alt]|alt_trs[ir2_alt]))
-							#print '{}\t{}\t{}:{}-{}:{}-{}:{}\t{}\t{}'.format(g_id[2:3], g_id, ir1.split('-')[0], ret_introns[ir1][0], ret_introns[ir1][1], ret_introns[ir2][0], ret_introns[ir2][1], ir2.split('-')[1], ','.join(ir_events[ir1]), ','.join(ir_events[ir1]|ir_events[ir2]))
-							#print '{}\t{}\t{}:{}-{}:{}-{}:{}\t{}\t{}'.format(g_id[2:3], g_id, ir1.split('-')[0], ret_introns[ir1][0], ret_introns[ir1][1], ret_introns[ir2][0], ret_introns[ir2][1], ir2.split('-')[1], ','.join(alt_trs[ir1_alt]), ','.join(alt_trs[ir1_alt]|alt_trs[ir2_alt]))
-							#raw_input()
 						except IndexError, e: print e
-
-			#for ir in natsorted(ir_events):
-			#	print ir, ir_events[ir]
-
-			#print ret_introns
 
 if __name__ == '__main__':
 
