@@ -73,7 +73,8 @@ def yield_SUPPA(ioe_file, boundary_type="S"):
 				impact_region = [e1, s3]
 
 			elif event_type in ["RI", "EI"]:
-				event_type, c, exon_left, intron, exon_right, strand = event_id.split(';')[1].split(':')
+				if boundary_type == 'S': event_type, c, exon_left, intron, exon_right, strand = event_id.split(';')[1].split(':')
+				else: event_type, c, intron, strand = event_id.split(';')[1].split(':')
 				impact_region = map(int, intron.split('-'))
 
 			# Yield event
@@ -96,23 +97,23 @@ def is_overlapping(s, e, x, y):
 		s < x and x <= e <= y # Left overlap with ref exon
 	])
 
-def SUPPA_complex(ioe_files, ctrl_TPM_file, smpl_TPM_file, boundary_type="S"):
+def SUPPA_complex(ioe_files, ctrl_TPM_file, smpl_TPM_file, boundary_type):
 
 	# Parse TPMs
-	ctrl_TPM = {}
-	for line in open(ctrl_TPM_file):
-		try: ctrl_TPM[line.split('\t')[0]] = map(float, line.rstrip().split('\t')[1:])
-		except ValueError: N = len(line.rstrip().split('\t'))
+	#ctrl_TPM = {}
+	#for line in open(ctrl_TPM_file):
+	#	try: ctrl_TPM[line.split('\t')[0]] = map(float, line.rstrip().split('\t')[1:])
+	#	except ValueError: N = len(line.rstrip().split('\t'))
 
-	smpl_TPM = {}
-	for line in open(smpl_TPM_file):
-		try: smpl_TPM[line.split('\t')[0]] = map(float, line.rstrip().split('\t')[1:])
-		except ValueError: pass
+	#smpl_TPM = {}
+	#for line in open(smpl_TPM_file):
+	#	try: smpl_TPM[line.split('\t')[0]] = map(float, line.rstrip().split('\t')[1:])
+	#	except ValueError: pass
 
 	# Group SUPPA events per gene
 	events = {}
-	for f in ioe_files:
-		for e in yield_SUPPA(f):
+	for i, f in enumerate(ioe_files):
+		for e in yield_SUPPA(f, boundary_type[i]):
 
 			#if e.is_expressed(ctrl_TPM, smpl_TPM, N):
 
@@ -171,9 +172,9 @@ if __name__ == '__main__':
 	
 	parser = argparse.ArgumentParser(description=__doc__)
 	parser.add_argument('--ioe', nargs='+', required=True, help="SUPPA ioe files.")
-	parser.add_argument('--control-TPM', required=True, help="Control TPM values.")
-	parser.add_argument('--sample-TPM', required=True, help="Sample TPM values.")
-	parser.add_argument('--boundary-type', choices=["S", "V"], default="S", help="SUPPA generateEvents boundary type.")
+	parser.add_argument('--control-TPM', required=False, help="Control TPM values.")
+	parser.add_argument('--sample-TPM', required=False, help="Sample TPM values.")
+	parser.add_argument('--boundary-type', nargs='+', help="SUPPA generateEvents boundary type.")
 	args = parser.parse_args()
 
 	SUPPA_complex(args.ioe, args.control_TPM, args.sample_TPM, args.boundary_type)
