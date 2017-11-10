@@ -23,6 +23,7 @@ import re
 import argparse
 import subprocess
 
+# http://bedtools.readthedocs.io/en/latest/content/tools/intersect.html
 # bedtools intersectBed -a <GTF> -b <MOTIFS.BED> -wo
 
 def map2genome(genome_fasta, motif, output_dir):
