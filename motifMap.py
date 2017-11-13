@@ -66,6 +66,23 @@ def GxIG(motif_hit_files, gtf_file, output_dir):
 
 	if not os.path.exists(output_dir): os.makedirs(output_dir)
 
+	# Create the "gene" bed file, so that the intronic hits
+	# are also included as genic hits.
+	gtf = parse_GTF(gtf_file)
+	genes = {}
+	for t_id in gtf:
+		g_id = t_id.split('.')[0]
+		start = min([ x[0] for x in gtf[t_id]['exons']])
+		end = max([ x[1] for x in gtf[t_id]['exons']])
+		try:
+			genes[g_id]['start'] = start if start < genes[g_id]['start'] else genes[g_id]['start']
+			genes[g_id]['end'] = end if end > genes[g_id]['end'] else genes[g_id]['end']
+		except KeyError: genes[g_id] = { 'chr': gtf[t_id]['chr'], 'strand': gtf[t_id]['strand'], 'start': start, 'end': end }
+
+	with open("{}/genes.bed".format(output_dir), 'w') as fout:
+		for g_id in natsorted(genes):
+			fout.write( '{}\t{}\t{}\t{}\t1000\t{}\n'.format(genes[g_id]['chr'], genes[g_id]['start'], genes[g_id]['end'], g_id, genes[g_id]['strand']) )
+
 	with open("{}/GxIG.txt".format(output_dir), 'w') as fout: 
 		fout.write('MOTIF\tTOTAL_HITS\tGENIC\tINTERGENIC\tON_STRAND\tOPPOSITE_STRAND\n')
 		for motif_file in motif_hit_files:
@@ -76,26 +93,84 @@ def GxIG(motif_hit_files, gtf_file, output_dir):
 			n_hits = sum([ 1 for line in open(motif_file) ])
 
 			# Get all genic hits
-			p = subprocess.Popen(['intersectBed -a {} -b {} -u | wc -l'.format(motif_file, gtf_file)], stdout=subprocess.PIPE, shell=True)
+			p = subprocess.Popen(['intersectBed -a {} -b {}/genes.bed -u | wc -l'.format(motif_file, output_dir)], stdout=subprocess.PIPE, shell=True)
 			out, err = p.communicate()
 			genic_hits = int(out.rstrip())
 
+			# Get all intergenic hits
+			p = subprocess.Popen(['intersectBed -a {} -b {}/genes.bed -v | wc -l'.format(motif_file, output_dir)], stdout=subprocess.PIPE, shell=True)
+			out, err = p.communicate()
+			intergenic_hits = int(out.rstrip())
+
 			# Get the genes with non strand specific hits
-			subprocess.call('intersectBed -a {} -b {} -u | python laBarta/get_gene_id.py | sort | uniq > {}/{}_genic_non_specific.txt'.format(gtf_file, motif_file, output_dir, motif), shell=True)
+			subprocess.call('intersectBed -a {0}/genes.bed -b {1} -u | awk \'{{ print $4 }}\' | sort | uniq > {0}/{2}_genic_non_specific.txt'.format(output_dir, motif_file, motif), shell=True)
 
 			# Get strand-specific genic hits
-			p = subprocess.Popen(['intersectBed -a {} -b {} -s -u | wc -l'.format(motif_file, gtf_file)], stdout=subprocess.PIPE, shell=True)
+			p = subprocess.Popen(['intersectBed -a {} -b {}/genes.bed -s -u | wc -l'.format(motif_file, output_dir)], stdout=subprocess.PIPE, shell=True)
 			out, err = p.communicate()
 			ss_hits = int(out.rstrip())
-			fs_hits = genic_hits - ss_hits
+
+			# Get opposite strand genic hits
+			p = subprocess.Popen(['intersectBed -a {} -b {}/genes.bed -S -u | wc -l'.format(motif_file, output_dir)], stdout=subprocess.PIPE, shell=True)
+			out, err = p.communicate()
+			fs_hits = int(out.rstrip())
 
 			# Get the genes with strand specific hits
-			subprocess.call('intersectBed -a {} -b {} -s -u | python laBarta/get_gene_id.py | sort | uniq > {}/{}_genic_specific.txt'.format(gtf_file, motif_file, output_dir, motif), shell=True)
-
-			# Get the number of intergenic hits
-			intergenic_hits = n_hits - genic_hits
+			subprocess.call('intersectBed -a {0}/genes.bed -b {1} -s -u | awk \'{{ print $4 }}\' | sort | uniq > {0}/{2}_genic_specific.txt'.format(output_dir, motif_file, motif), shell=True)
 
 			fout.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(motif, n_hits, genic_hits, intergenic_hits, ss_hits, fs_hits))
+
+def ExI(gtf_file, motif_hit_files, reference_list, output_dir):
+	"""
+		Get the motif counts for the exons and introns
+		of the reference transcripts. 
+	"""
+
+	if not os.path.exists(output_dir): os.makedirs(output_dir)
+
+	# Create the intron/exon bed files for 
+	# the reference isoforms
+
+	ref = set([ line.rstrip() for line in open(reference_list) ])
+	exonOut = open('{}/ref_exons.bed'.format(output_dir), 'w')
+	intronOut = open('{}/ref_introns.bed'.format(output_dir), 'w')
+
+	gtf = parse_GTF(gtf_file)
+	for t_id in natsorted(gtf):
+		if t_id in ref:
+
+			c, strand, exons = [gtf[t_id][x] for x in ['chr', 'strand', 'exons']]
+
+			# Output exons
+			for i, x in enumerate(exons): 
+				exonOut.write( '{}\t{}\t{}\t{}:{}\t1000\t{}\n'.format(c, x[0]-1, x[1], t_id, i+1, strand) )
+
+			# Output introns
+			for i in xrange(len(exons)-1):
+				x1 = exons[i]
+				x2 = exons[i+1]
+				intron = [x1[1]+1, x2[0]-1] if strand == '+' else [x2[1]+1, x1[0]-1]
+				intronOut.write( '{}\t{}\t{}\t{}:{}\t1000\t{}\n'.format(c, intron[0]-1, intron[1], t_id, i+1, strand) )
+
+	exonOut.close(), intronOut.close()
+
+	with open("{}/ExI.txt".format(output_dir), 'w') as fout:
+		fout.write( 'MOTIF\tTOTAL_HITS\tEXONIC\tINTRONIC\n' )
+		for motif_file in motif_hit_files:
+
+			motif = motif_file.split('/')[-1].replace('.bed', '')
+
+			# Exonic on-strand hits
+			p = subprocess.Popen(['intersectBed -a {} -b {}/ref_exons.bed -f 1 -u -s | wc -l'.format(motif_file, output_dir)], stdout=subprocess.PIPE, shell=True)
+			out, err = p.communicate()
+			exonic_hits = int(out.rstrip())
+
+			# Intronic on-strand hits
+			p = subprocess.Popen(['intersectBed -a {} -b {}/ref_introns.bed -f 1 -u -s | wc -l'.format(motif_file, output_dir)], stdout=subprocess.PIPE, shell=True)
+			out, err = p.communicate()
+			intronic_hits = int(out.rstrip())
+
+			fout.write( '{}\t{}\t{}\t{}\n'.format(motif, exonic_hits+intronic_hits, exonic_hits, intronic_hits) )
 
 def motifDensity(gtf_file, motif_hit_files, reference_list, output_dir, create_bins=False):
 	""" 
@@ -132,38 +207,39 @@ def motifDensity(gtf_file, motif_hit_files, reference_list, output_dir, create_b
 
 							ex1 = exons[i]
 							ex2 = exons[i+1]
-							intron = [ex1[1]+1, ex2[0]-1] if strand == '+' else [ex1[0]-1, ex2[1]+1]
+							intron = [ex1[1]+1, ex2[0]-1] if strand == '+' else [ex2[1]+1, ex1[0]-1]
+							if strand == '-': ex1, ex2 = ex2, ex1
 
 							# 5' splice site
 							ex1_len = abs(ex1[1]-ex1[0])
 							ex1_mid = int(ex1[0] + round(ex1_len / 2))
 							if ex1_len > 74:
 								fout.write( '{}\t{}\t{}\tmid_30bp\t1000\t{}\n'.format(c, ex1_mid, ex1[1]-31, strand) )
-								fout.write( '{}\t{}\t{}\t30bp_5prime\t1000\t{}\n'.format(c, ex1[1]-30, ex1[1], strand) )
+								fout.write( '{}\t{}\t{}\t30bp_{}prime\t1000\t{}\n'.format(c, ex1[1]-30, ex1[1], '5' if strand == '+' else '3', strand) )
 							elif ex1_len > 15:
-								fout.write( '{}\t{}\t{}\t30bp_5prime\t1000\t{}\n'.format(c, ex1_mid, ex1[1], strand) )
-							fout.write( '{}\t{}\t{}\t5prime\t1000\t{}\n'.format(c, ex1[1]-5, ex1[1]+8, strand) )
+								fout.write( '{}\t{}\t{}\t30bp_{}prime\t1000\t{}\n'.format(c, ex1_mid, ex1[1], '5' if strand == '+' else '3', strand) )
+							fout.write( '{}\t{}\t{}\t{}prime\t1000\t{}\n'.format(c, ex1[1]-6, ex1[1]+8, '5' if strand == '+' else '3', strand) )
 
 							# intron
 							intron_len = abs(intron[1]-intron[0])
 							if intron_len > 74:
-								fout.write( '{}\t{}\t{}\t5prime_30bp\t1000\t{}\n'.format(c, intron[0]+2, intron[0]+30, strand) )
+								fout.write( '{}\t{}\t{}\t{}prime_30bp\t1000\t{}\n'.format(c, intron[0]+1, intron[0]+30, '5' if strand == '+' else '3', strand) )
 								x = natsorted([intron[0], intron[1]])
 								fout.write( '{}\t{}\t{}\tintron_mid\t1000\t{}\n'.format(c, x[0]+30, x[1]-30, strand) )
-								fout.write( '{}\t{}\t{}\t30bp_3prime\t1000\t{}\n'.format(c, intron[1]-30, intron[1]-2, strand) )
+								fout.write( '{}\t{}\t{}\t30bp_{}prime\t1000\t{}\n'.format(c, intron[1]-31, intron[1]-2, '3' if strand == '+' else '5', strand) )
 							else:
-								fout.write( '{}\t{}\t{}\t5prime_30bp\t1000\t{}\n'.format(c, intron[0]+2, int(intron[0]+round(intron_len / 2)), strand) )
-								fout.write( '{}\t{}\t{}\t30bp_3prime\t1000\t{}\n'.format(c, int(intron[1]-round(intron_len / 2)), intron[1]-2, strand) )
+								fout.write( '{}\t{}\t{}\t{}prime_30bp\t1000\t{}\n'.format(c, intron[0]+1, int(intron[0]+round(intron_len / 2)), '5' if strand == '+' else '3', strand) )
+								fout.write( '{}\t{}\t{}\t30bp_{}prime\t1000\t{}\n'.format(c, int(intron[1]-round(intron_len / 2)), intron[1]-2, '3' if strand == '+' else '5', strand) )
 
 							# 3' splice site
 							ex2_len = abs(ex2[1]-ex2[0])
 							ex2_mid = int(ex2[0] + round(ex2_len / 2))
-							fout.write( '{}\t{}\t{}\t3prime\t1000\t{}\n'.format(c, ex2[0]-8, ex2[0]+5, strand) )
+							fout.write( '{}\t{}\t{}\t{}prime\t1000\t{}\n'.format(c, ex2[0]-9, ex2[0]+5, '3' if strand == '+' else '5', strand) )
 							if ex2_len > 74:
-								fout.write( '{}\t{}\t{}\t3prime_30bp\t1000\t{}\n'.format(c, ex2[0], ex2[0]+30, strand) )
+								fout.write( '{}\t{}\t{}\t{}prime_30bp\t1000\t{}\n'.format(c, ex2[0], ex2[0]+30, '3' if strand == '+' else '5', strand) )
 								fout.write( '{}\t{}\t{}\t30bp_mid\t1000\t{}\n'.format(c, ex2[0]+31, ex2_mid, strand) )
 							elif ex2_len > 15:
-								fout.write( '{}\t{}\t{}\t3prime_30bp\t1000\t{}\n'.format(c, ex2[0], ex2_mid, strand) )
+								fout.write( '{}\t{}\t{}\t{}prime_30bp\t1000\t{}\n'.format(c, ex2[0], ex2_mid, '3' if strand == '+' else '5', strand) )
 
 	# Get the total length of each bin
 	scale = Counter()
@@ -204,12 +280,17 @@ if __name__ == '__main__':
 	parser_b = subparsers.add_parser('GxIG', help="Count genic vs intergenic hits.")
 	parser_b.add_argument('--motif-hits', nargs='+', required=True, help="List of motif hit files (from map2genome).")
 	parser_b.add_argument('-g', '--gtf', required=True, help="Transcript GTF annotation.")
-	
-	parser_c = subparsers.add_parser('motifDensity', help="Get the motif density.")
+
+	parser_c = subparsers.add_parser('ExI', help="Count the exonic vs intronic hits.")
 	parser_c.add_argument('--motif-hits', nargs='+', required=True, help="List of motif hit files (from map2genome).")
 	parser_c.add_argument('-g', '--gtf', required=True, help="Transcript GTF annotation.")
 	parser_c.add_argument('-r', '--ref', required=True, help="Representative gene models.")
-	parser_c.add_argument('--create-bins', action='store_true')
+	
+	parser_d = subparsers.add_parser('motifDensity', help="Get the motif density.")
+	parser_d.add_argument('--motif-hits', nargs='+', required=True, help="List of motif hit files (from map2genome).")
+	parser_d.add_argument('-g', '--gtf', required=True, help="Transcript GTF annotation.")
+	parser_d.add_argument('-r', '--ref', required=True, help="Representative gene models.")
+	parser_d.add_argument('--create-bins', action='store_true')
 
 	args = parser.parse_args()
 
@@ -217,5 +298,7 @@ if __name__ == '__main__':
 		map2genome(args.genome, args.motif, args.dir)
 	elif args.command == "GxIG":
 		GxIG(args.motif_hits, args.gtf, args.dir)
+	elif args.command == "ExI":
+		ExI(args.gtf, args.motif_hits, args.ref, args.dir)
 	elif args.command == "motifDensity":
 		motifDensity(args.gtf, args.motif_hits, args.ref, args.dir, args.create_bins)
