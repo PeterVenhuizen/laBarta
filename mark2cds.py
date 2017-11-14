@@ -42,7 +42,6 @@ def mark2cds(fasta_file, exons_fasta):
 			if t_id in marks:
 
 				#print t_id
-				track_seq = ''
 				track_len = 0
 
 				exs = [ e for e in natsorted(exons[g_id][t_id]) ] if isFwd else [ e for e in natsorted(exons[g_id][t_id], reverse=True) ]
@@ -74,12 +73,10 @@ def mark2cds(fasta_file, exons_fasta):
 									# Check if maybe the translation maybe exactly matches the protein start
 									if not start_found and m2star.startswith(ex_trs): start_found = True
 
-
 									print '{}\tMark2CDS\tCDS\t{}\t{}\t.\t{}\t{}\ttranscript_id "{}"; gene_id "{}";'.format(t_id[2:3], s, e, '+' if isFwd else '-', j, t_id, g_id)
 									track_len += len(ex_trs) + bool(leftover)
-									track_seq += ex_trs
-									#print 1, track_seq
 									#print ex, j, s, e, ex_trs, leftover
+									#print track_len, len(ex_trs)+bool(leftover), ex_trs, leftover
 									break
 
 								else:
@@ -94,7 +91,7 @@ def mark2cds(fasta_file, exons_fasta):
 											except ValueError: m = len(ex_trs)
 											#print m
 
-											if m2star.startswith(ex_trs[n:m]) and len(ex_trs[n:m]) > 1:
+											if m2star.startswith(ex_trs[n:m]) and len(ex_trs[n:m]) > 1 or m2star.startswith(ex_trs[n:m]) and m == len(ex_trs):
 
 												#print 'START', ex_trs, ex_trs[n:m], leftover
 
@@ -116,9 +113,8 @@ def mark2cds(fasta_file, exons_fasta):
 													print '{}\tMark2CDS\tCDS\t{}\t{}\t.\t{}\t{}\ttranscript_id "{}"; gene_id "{}";'.format(t_id[2:3], start, e, '+' if isFwd else '-', j, t_id, g_id)
 												else: 
 													print '{}\tMark2CDS\tCDS\t{}\t{}\t.\t{}\t{}\ttranscript_id "{}"; gene_id "{}";'.format(t_id[2:3], s, s+(len(ex_trs[n:])*3)-1+len(leftover), '+' if isFwd else '-', j, t_id, g_id)
-												track_seq += ex_trs[n:m]
 												track_len += len(ex_trs[n:m]) + bool(leftover)
-												#print track_seq
+												#print track_len, len(ex_trs)+bool(leftover), ex_trs, leftover
 												break
 
 									elif not end_found:
@@ -126,6 +122,7 @@ def mark2cds(fasta_file, exons_fasta):
 										for n in xrange(len(ex_trs), 0, -1):
 											#if m2star.endswith(ex_trs[:n]): print track_seq+ex_trs[:n], leftover
 											#if m2star.endswith(ex_trs[:n]) and track_seq+ex_trs[:n] == mark:
+											#if m2star.endswith(ex_trs[:n]): print len(mark), track_len+len(ex_trs[:n])
 											if m2star.endswith(ex_trs[:n]) and (track_len+len(ex_trs[:n])) == len(mark):
 
 												#print 'END', ex_trs[:n]
@@ -139,6 +136,7 @@ def mark2cds(fasta_file, exons_fasta):
 													print '{}\tMark2CDS\tCDS\t{}\t{}\t.\t{}\t{}\ttranscript_id "{}"; gene_id "{}";'.format(t_id[2:3], start, e, '+' if isFwd else '-', j, t_id, g_id)
 
 												#print ex, j, s, s+(n*3)-1+j, ex_trs[:n]
+												#print track_len, len(ex_trs)+bool(leftover), ex_trs, leftover
 												end_found = True
 												break
 
