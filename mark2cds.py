@@ -163,7 +163,7 @@ def mark2cds(fasta_file, exons_fasta):
 												end_found = True
 												break
 
-									#print start_found, end_found
+									print start_found, end_found
 
 							# Second round for special case start detection
 							# NEED TO FIX AT1G03860.P3!!!
@@ -177,9 +177,10 @@ def mark2cds(fasta_file, exons_fasta):
 										# is the last AA of an exon
 										if m2star.startswith(ex_trs[n:]):
 											start_found = True
+											track_len += len(ex_trs[n:]) + bool(leftover)
 											if isFwd:
 												start = s+(n*3)+j
-												print '{}\tMark2CDS\tCDS\t{}\t{}\t.\t+\t{}\ttranscript_id "{}"; gene_id "{}";'.format(t_id[2:3], start, end, j, t_id, g_id)
+												print '{}\tMark2CDS\tCDS\t{}\t{}\t.\t+\t{}\ttranscript_id "{}"; gene_id "{}";'.format(t_id[2:3], start, e, j, t_id, g_id)
 											else:
 												print '{}\tMark2CDS\tCDS\t{}\t{}\t.\t-\t{}\ttranscript_id "{}"; gene_id "{}";'.format(t_id[2:3], s, s+(len(ex_trs[n:])*3)-1+len(leftover), j, t_id, g_id)
 											break
